@@ -2,7 +2,7 @@
 
 Record your local audio and summarize it with whisper.cpp and llama.cpp!  Open source, local on-prem transcription and summarization!
 
-## AudioSumma Installation
+## Installation
 
 ```
 pip install -r requirements.txt
@@ -11,6 +11,10 @@ pip install -r requirements.txt
 ## Configuration
 
 Copy sample.env to .env and point your endpoint URLs for a working llama.cpp and whisper.cpp running in server/api mode.
+
+## llama.cpp and whisper.cpp
+
+These need to be running in server mode somewhere on your local machine or on your network.  Make sure the PROMPT_FORMAT in your .env file matches exactly to what the LLM model expects.
 
 ## Running
 
