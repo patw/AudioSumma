@@ -2,6 +2,8 @@
 
 Record your local audio and summarize it with whisper.cpp and llama.cpp!  Open source, local on-prem transcription and summarization!
 
+![Main UI](screenshot.png)
+
 ## Installation
 
 ```

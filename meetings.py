@@ -4,23 +4,30 @@ import subprocess
 import pyaudio
 import wave
 import threading
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QInputDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QInputDialog, QLabel
+from PyQt5.QtGui import QIcon, QPixmap
 
 class RecordingApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.initUI()
+        self.recording_pixmap = QPixmap("recording.png")
+        self.not_recording_pixmap = QPixmap("notrecording.png")
         self.is_recording = False
         self.audio_thread = None
         self.stream = None
         self.p = None
         self.wf = None
-
+        self.initUI()
+        
     def initUI(self):
         self.setWindowTitle('Meeting Recorder')
         self.setGeometry(500, 500, 500, 150)
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
+
+        self.status_label = QLabel(self)
+        self.status_label.setPixmap(self.not_recording_pixmap)
+        layout.addWidget(self.status_label)
 
         self.record_button = QPushButton('Record', self)
         self.record_button.clicked.connect(self.toggle_recording)
@@ -47,6 +54,7 @@ class RecordingApp(QWidget):
         if ok and filename:
             self.is_recording = True
             self.record_button.setText('Stop Recording')
+            self.status_label.setPixmap(self.recording_pixmap)
             self.audio_thread = threading.Thread(target=self.record_audio, args=(filename,))
             self.audio_thread.start()
 
@@ -54,6 +62,7 @@ class RecordingApp(QWidget):
         if self.is_recording:
             self.is_recording = False
             self.record_button.setText('Record')
+            self.status_label.setPixmap(self.not_recording_pixmap)
             if self.audio_thread:
                 self.audio_thread.join()
             if self.stream:
@@ -114,6 +123,7 @@ class RecordingApp(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("headphones.png"))
     ex = RecordingApp()
     ex.show()
     sys.exit(app.exec_())
