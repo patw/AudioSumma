@@ -11,6 +11,7 @@ WHISPERCPP_URL = os.getenv("WHISPERCPP_URL")
 LLAMACPP_URL = os.getenv("LLAMACPP_URL")
 SYSTEM_MESSAGE = os.getenv("SYSTEM_MESSAGE")
 SUMMARY_PROMPT = os.getenv("SUMMARY_PROMPT")
+FACT_PROMPT = os.getenv("FACT_PROMPT")
 SENTIMENT_PROMPT = os.getenv("SENTIMENT_PROMPT")
 PROMPT_FORMAT = os.getenv("PROMPT_FORMAT")
 STOP_TOKEN = os.getenv("STOP_TOKEN")
@@ -105,11 +106,15 @@ for transcript in transcript_files:
                 summary_prompt = SUMMARY_PROMPT.format(chunk=chunk)
                 summary = llama_api(summary_prompt)
 
+                # Generate fact summary
+                fact_prompt = FACT_PROMPT.format(chunk=chunk)
+                facts = llama_api(fact_prompt)
+
                 # Generate call sentiment
                 sentiment_prompt = SENTIMENT_PROMPT.format(chunk=chunk)
                 sentiment = llama_api(sentiment_prompt)
 
                 # Write the notes
-                md_file.write(f"# Summary - {transcript} - Part {i + 1}\n\n{summary}\n\n{sentiment}\n\n---\n")
+                md_file.write(f"# Call Transcript - {transcript} - Part {i + 1}\n\nSummary: {summary}\n\nFacts:\n{facts}\n\nSentiment: {sentiment}\n\n---\n")
 
 print("Summarizing complete")
