@@ -1,6 +1,8 @@
 import os
 import requests
 import datetime
+import tempfile
+import subprocess
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -48,10 +50,37 @@ def llama_api(prompt):
     json_output = response.json()
     return json_output['content']
 
+# Use ffmpeg to trim silence in wav files, to prevent issues with 
+# whisper.cpp stopping the transcode if it detects a large amount of silence
+def trim_silence(filename):
+    # Create a temporary file for the output
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+        temp_filename = temp_file.name
+
+    # Construct the FFmpeg command
+    ffmpeg_command = [
+        "ffmpeg",
+        "-i", filename,
+        "-af", "silenceremove=stop_threshold=-40dB:stop_duration=1:stop_periods=-1",
+        "-y",  # Overwrite output file if it exists
+        temp_filename
+    ]
+
+    # Run the FFmpeg command
+    result = subprocess.run(ffmpeg_command, capture_output=True, text=True, check=True)
+
+    # If FFmpeg command was successful, replace the original file
+    os.replace(temp_filename, filename)
+
 # Iterate over each WAV file and transcode with whisper API
 wav_files = [f for f in os.listdir(".") if f.endswith(".wav")]
 for wav_file in wav_files:
-    # Open the WAV file
+
+    # Trim silence on the wav file first
+    print("Trimming silence: " + wav_file)
+    trim_silence(wav_file)
+    
+    # Open the WAV file for sending to whisper REST API
     with open(wav_file, "rb") as file:
         print("Transcribing: " + wav_file)
         # Call whisper API to transcode file

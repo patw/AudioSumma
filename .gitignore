@@ -13,6 +13,12 @@ __pycache__/
 *.wav
 *.tns
 
+# Ignore my ffmpeg
+*.exe
+
+# Ignore my summary files
+summary-*.md
+
 # Distribution / packaging
 .Python
 build/
