@@ -1,11 +1,11 @@
 import sys
 import os
-import subprocess
 import pyaudio
 import wave
 import threading
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QInputDialog, QLabel
 from PyQt5.QtGui import QIcon, QPixmap
+import summarize
 
 class RecordingApp(QWidget):
     def __init__(self):
@@ -104,7 +104,12 @@ class RecordingApp(QWidget):
         print(f"Audio saved to {file_path}")
 
     def transcribe(self):
-        subprocess.Popen(['python', 'summarize.py'])
+        # Run the transcription and summarization in the background
+        threading.Thread(target=self.run_transcription_and_summarization).start()
+
+    def run_transcription_and_summarization(self):
+        summarize.process_wav_files()
+        summarize.summarize_transcripts()
 
     def clean(self):
         print("Cleaning files...")
