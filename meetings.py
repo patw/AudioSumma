@@ -3,7 +3,7 @@ import os
 import pyaudio
 import wave
 import threading
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QInputDialog, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QInputDialog, QLabel, QComboBox
 from PyQt5.QtGui import QIcon, QPixmap
 import summarize
 
@@ -18,30 +18,57 @@ class RecordingApp(QWidget):
         self.p = None
         self.wf = None
         self.initUI()
-        
+
     def initUI(self):
         self.setWindowTitle('Meeting Recorder')
         self.setGeometry(500, 500, 500, 150)
 
-        layout = QHBoxLayout()
+        # Main vertical layout
+        main_layout = QVBoxLayout()
+
+        # Horizontal layout for the status label and device combo box
+        top_layout = QHBoxLayout()
 
         self.status_label = QLabel(self)
         self.status_label.setPixmap(self.not_recording_pixmap)
-        layout.addWidget(self.status_label)
+        top_layout.addWidget(self.status_label)
+
+        self.device_combo = QComboBox(self)
+        self.device_combo.addItems(self.get_device_names())
+        top_layout.addWidget(self.device_combo)
+
+        main_layout.addLayout(top_layout)
+
+        # Horizontal layout for the buttons
+        button_layout = QHBoxLayout()
 
         self.record_button = QPushButton('Record', self)
         self.record_button.clicked.connect(self.toggle_recording)
-        layout.addWidget(self.record_button)
+        button_layout.addWidget(self.record_button)
 
         self.transcribe_button = QPushButton('Transcribe', self)
         self.transcribe_button.clicked.connect(self.transcribe)
-        layout.addWidget(self.transcribe_button)
+        button_layout.addWidget(self.transcribe_button)
 
         self.clean_button = QPushButton('Clean', self)
         self.clean_button.clicked.connect(self.clean)
-        layout.addWidget(self.clean_button)
+        button_layout.addWidget(self.clean_button)
 
-        self.setLayout(layout)
+        main_layout.addLayout(button_layout)
+
+        self.setLayout(main_layout)
+
+    def get_device_names(self):
+        p = pyaudio.PyAudio()
+        info = p.get_host_api_info_by_index(0)
+        num_devices = info.get('deviceCount')
+        device_names = []
+        for i in range(num_devices):
+            device_info = p.get_device_info_by_host_api_device_index(0, i)
+            if device_info.get('maxInputChannels') > 0:
+                device_names.append(device_info.get('name'))
+        p.terminate()
+        return device_names
 
     def toggle_recording(self):
         if not self.is_recording:
@@ -55,7 +82,8 @@ class RecordingApp(QWidget):
             self.is_recording = True
             self.record_button.setText('Stop Recording')
             self.status_label.setPixmap(self.recording_pixmap)
-            self.audio_thread = threading.Thread(target=self.record_audio, args=(filename,))
+            selected_device_index = self.device_combo.currentIndex()
+            self.audio_thread = threading.Thread(target=self.record_audio, args=(filename, selected_device_index))
             self.audio_thread.start()
 
     def stop_recording(self):
@@ -73,7 +101,7 @@ class RecordingApp(QWidget):
             if self.wf:
                 self.wf.close()
 
-    def record_audio(self, filename):
+    def record_audio(self, filename, device_index):
         chunk_size = 1024
         sampling_rate = 16000
         num_channels = 1
@@ -92,7 +120,7 @@ class RecordingApp(QWidget):
             rate=sampling_rate,
             input=True,
             frames_per_buffer=chunk_size,
-            input_device_index=0
+            input_device_index=device_index
         )
 
         print(f"Recording to {file_path}. Press 'Stop Recording' to stop...")
