@@ -8,3 +8,6 @@ pyaudio
 # Transcriber
 requests
 dotenv
+
+# LLM Interface
+openai

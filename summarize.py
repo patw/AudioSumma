@@ -5,6 +5,9 @@ import tempfile
 import subprocess
 from dotenv import load_dotenv
 
+# Use local models with the OpenAI library and a custom baseurl
+from openai import OpenAI
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -15,8 +18,6 @@ SYSTEM_MESSAGE = os.getenv("SYSTEM_MESSAGE")
 SUMMARY_PROMPT = os.getenv("SUMMARY_PROMPT")
 FACT_PROMPT = os.getenv("FACT_PROMPT")
 SENTIMENT_PROMPT = os.getenv("SENTIMENT_PROMPT")
-PROMPT_FORMAT = os.getenv("PROMPT_FORMAT")
-STOP_TOKEN = os.getenv("STOP_TOKEN")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
 TEMPERATURE = float(os.getenv("TEMPERATURE"))
 
@@ -30,19 +31,11 @@ def whisper_api(file):
     response = requests.post(WHISPERCPP_URL, data=api_data, files=files)
     return response.json()["text"]
 
-def llama_api(prompt):
-    """Generate response using llama.cpp server API."""
-    formatted_prompt = PROMPT_FORMAT.format(system=SYSTEM_MESSAGE, prompt=prompt)
-    api_data = {
-        "prompt": formatted_prompt,
-        "n_predict": -1,
-        "temperature": TEMPERATURE,
-        "stop": [STOP_TOKEN],
-        "tokens_cached": 0
-    }
-    response = requests.post(LLAMACPP_URL, headers={"Content-Type": "application/json"}, json=api_data)
-    json_output = response.json()
-    return json_output['content']
+def llm_local(prompt):
+    client = OpenAI(api_key="doesntmatter", base_url=LLAMACPP_URL)
+    messages=[{"role": "system", "content": SYSTEM_MESSAGE},{"role": "user", "content": prompt}]
+    response = client.chat.completions.create(model="whatever", temperature=TEMPERATURE, messages=messages)
+    return response.choices[0].message.content
 
 def trim_silence(filename):
     """Trim silence from audio file using FFmpeg."""
@@ -102,9 +95,9 @@ def summarize_transcripts():
 
             with open(summary_filename, "a") as md_file:
                 for i, chunk in enumerate(chunked_data):
-                    summary = llama_api(SUMMARY_PROMPT.format(chunk=chunk))
-                    facts = llama_api(FACT_PROMPT.format(chunk=chunk))
-                    sentiment = llama_api(SENTIMENT_PROMPT.format(chunk=chunk))
+                    summary = llm_local(SUMMARY_PROMPT.format(chunk=chunk))
+                    facts = llm_local(FACT_PROMPT.format(chunk=chunk))
+                    sentiment = llm_local(SENTIMENT_PROMPT.format(chunk=chunk))
 
                     md_file.write(f"# Call Transcript - {transcript} - Part {i + 1}\n\nSummary: {summary}\n\nFacts:\n{facts}\n\nSentiment: {sentiment}\n\n---\n")
 
