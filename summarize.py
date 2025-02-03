@@ -57,6 +57,14 @@ def process_wav_files():
     """Process WAV files: trim silence and transcribe."""
     wav_files = [f for f in os.listdir(".") if f.endswith(".wav")]
     for wav_file in wav_files:
+        # Generate the expected transcript filename
+        transcript_file = os.path.splitext(wav_file)[0] + ".tns"
+
+        # Check if transcript already exists
+        if os.path.exists(transcript_file):
+            print(f"Transcript already exists for {wav_file}, skipping transcription")
+            continue
+
         print("Trimming silence: " + wav_file)
         trim_silence(wav_file)
 
@@ -95,6 +103,7 @@ def summarize_transcripts():
 
             with open(summary_filename, "a") as md_file:
                 for i, chunk in enumerate(chunked_data):
+                    print("Processing part " + str(i))
                     summary = llm_local(SUMMARY_PROMPT.format(chunk=chunk))
                     facts = llm_local(FACT_PROMPT.format(chunk=chunk))
                     sentiment = llm_local(SENTIMENT_PROMPT.format(chunk=chunk))
