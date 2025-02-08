@@ -20,6 +20,8 @@ FACT_PROMPT = os.getenv("FACT_PROMPT")
 SENTIMENT_PROMPT = os.getenv("SENTIMENT_PROMPT")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
 TEMPERATURE = float(os.getenv("TEMPERATURE"))
+TOP_P = float(os.getenv("TOP_P"))
+MAX_TOKENS = float(os.getenv("MAX_TOKENS"))
 
 def whisper_api(file):
     """Transcribe audio file using Whisper API."""
@@ -34,7 +36,7 @@ def whisper_api(file):
 def llm_local(prompt):
     client = OpenAI(api_key="doesntmatter", base_url=LLAMACPP_URL)
     messages=[{"role": "system", "content": SYSTEM_MESSAGE},{"role": "user", "content": prompt}]
-    response = client.chat.completions.create(model="whatever", temperature=TEMPERATURE, messages=messages)
+    response = client.chat.completions.create(model="whatever", max_tokens=MAX_TOKENS, temperature=TEMPERATURE, top_p=TOP_P, messages=messages)
     return response.choices[0].message.content
 
 def trim_silence(filename):
