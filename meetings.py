@@ -295,6 +295,7 @@ class RecordingApp(QWidget):
     def show_settings(self):
         """Show configuration dialog."""
         dialog = ConfigDialog(self.config, self)
+        dialog.resize(600, 400)  # Make dialog larger
         if dialog.exec_():
             self.config.update(dialog.get_values())
             self.save_config()
@@ -310,6 +311,7 @@ class ConfigDialog(QDialog):
         self.setModal(True)
         
         layout = QFormLayout()
+        layout.setSpacing(15)  # Add more spacing between rows
         
         self.whisper_url = QLineEdit(config["WHISPERCPP_URL"])
         self.llama_url = QLineEdit(config["LLAMACPP_URL"])
@@ -317,6 +319,11 @@ class ConfigDialog(QDialog):
         self.summary_prompt = QLineEdit(config["SUMMARY_PROMPT"])
         self.fact_prompt = QLineEdit(config["FACT_PROMPT"])
         self.sentiment_prompt = QLineEdit(config["SENTIMENT_PROMPT"])
+        
+        # Make all line edit fields taller
+        for line_edit in [self.whisper_url, self.llama_url, self.system_msg, 
+                         self.summary_prompt, self.fact_prompt, self.sentiment_prompt]:
+            line_edit.setMinimumHeight(30)
         self.chunk_size = QSpinBox()
         self.chunk_size.setRange(1000, 32000)
         self.chunk_size.setValue(config["CHUNK_SIZE"])
