@@ -6,6 +6,14 @@ Record your local audio and summarize it with whisper.cpp and llama.cpp!  Open s
 
 ## Installation
 
+### macOS Requirements
+For macOS users, you'll need to have [Homebrew](https://brew.sh/) installed first. Then install the required dependencies:
+
+```bash
+brew install ffmpeg portaudio
+```
+
+### All Platforms
 ```
 pip install -r requirements.txt
 ```
