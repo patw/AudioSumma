@@ -211,7 +211,8 @@ class RecordingApp(QWidget):
             transcript_file = os.path.splitext(wav_file)[0] + ".tns"
 
             # Check if transcript already exists
-            if os.path.exists(transcript_file):
+            full_transcript_path = os.path.join(self.config["OUTPUT_DIR"], transcript_file)
+            if os.path.exists(full_transcript_path):
                 print(f"Transcript already exists for {wav_file}, skipping transcription")
                 continue
 
