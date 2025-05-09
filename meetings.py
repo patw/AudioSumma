@@ -26,8 +26,9 @@ class RecordingApp(QWidget):
         self.p = None
         self.wf = None
         
-        # Configuration with defaults from sample.env
+        # Configuration with defaults
         self.config = {
+            "OUTPUT_DIR": os.path.join(os.path.expanduser("~"), "Documents", "MeetingTranscripts"),
             "WHISPERCPP_URL": "http://localhost:8081/inference",
             "LLAMACPP_URL": "http://localhost:8080/v1",
             "SYSTEM_MESSAGE": "You are a friendly chatbot that summarizes call transcripts",
@@ -137,7 +138,8 @@ class RecordingApp(QWidget):
         num_channels = 1
 
         self.p = pyaudio.PyAudio()
-        file_path = f"{filename}.wav"
+        os.makedirs(self.config["OUTPUT_DIR"], exist_ok=True)
+        file_path = os.path.join(self.config["OUTPUT_DIR"], f"{filename}.wav")
 
         self.wf = wave.open(file_path, 'wb')
         self.wf.setnchannels(num_channels)
@@ -203,7 +205,7 @@ class RecordingApp(QWidget):
 
     def process_wav_files(self):
         """Process WAV files: trim silence and transcribe."""
-        wav_files = [f for f in os.listdir(".") if f.endswith(".wav")]
+        wav_files = [f for f in os.listdir(self.config["OUTPUT_DIR"]) if f.endswith(".wav")]
         for wav_file in wav_files:
             # Generate the expected transcript filename
             transcript_file = os.path.splitext(wav_file)[0] + ".tns"
@@ -219,7 +221,7 @@ class RecordingApp(QWidget):
             with open(wav_file, "rb") as file:
                 print("Transcribing: " + wav_file)
                 output_text = self.whisper_api(file)
-                output_file = os.path.splitext(wav_file)[0] + ".tns"
+                output_file = os.path.join(self.config["OUTPUT_DIR"], os.path.splitext(wav_file)[0] + ".tns")
                 with open(output_file, "w") as output:
                     output.write(output_text)
 
@@ -240,8 +242,8 @@ class RecordingApp(QWidget):
     def summarize_transcripts(self):
         """Summarize transcript files."""
         today = datetime.datetime.now().strftime('%Y%m%d')
-        summary_filename = "summary-" + today + ".md"
-        transcript_files = [f for f in os.listdir(".") if f.endswith(".tns")]
+        summary_filename = os.path.join(self.config["OUTPUT_DIR"], "summary-" + today + ".md")
+        transcript_files = [f for f in os.listdir(self.config["OUTPUT_DIR"]) if f.endswith(".tns")]
 
         for transcript in transcript_files:
             print("Summarizing: " + transcript)
@@ -267,7 +269,7 @@ class RecordingApp(QWidget):
     def clean(self):
         print("Cleaning files...")
         try:
-            for file in os.listdir('.'):
+            for file in os.listdir(self.config["OUTPUT_DIR"]):
                 if file.endswith(('.wav', '.tns')):
                     os.remove(file)
                     print(f"Deleted: {file}")
@@ -351,7 +353,12 @@ class ConfigDialog(QDialog):
         layout.addRow("Chunk Size:", self.chunk_size)
         layout.addRow("Temperature:", self.temperature)
         layout.addRow("Top P:", self.top_p)
+        self.output_dir = QTextEdit(config["OUTPUT_DIR"])
+        self.output_dir.setMinimumSize(500, 80)
+        self.output_dir.setLineWrapMode(QTextEdit.WidgetWidth)
+        
         layout.addRow("Max Tokens:", self.max_tokens)
+        layout.addRow("Output Directory:", self.output_dir)
         
         buttons = QHBoxLayout()
         ok_button = QPushButton("OK")
@@ -375,7 +382,8 @@ class ConfigDialog(QDialog):
             "CHUNK_SIZE": self.chunk_size.value(),
             "TEMPERATURE": self.temperature.value(),
             "TOP_P": self.top_p.value(),
-            "MAX_TOKENS": self.max_tokens.value()
+            "MAX_TOKENS": self.max_tokens.value(),
+            "OUTPUT_DIR": self.output_dir.toPlainText()
         }
 
 if __name__ == '__main__':
