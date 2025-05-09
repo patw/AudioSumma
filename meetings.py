@@ -7,9 +7,11 @@ import requests
 import datetime
 import tempfile
 import subprocess
-from dotenv import load_dotenv
+import json
 from openai import OpenAI
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QInputDialog, QLabel, QComboBox
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QVBoxLayout, 
+                           QHBoxLayout, QInputDialog, QLabel, QComboBox,
+                           QDialog, QFormLayout, QLineEdit, QDoubleSpinBox, QSpinBox)
 from PyQt5.QtGui import QIcon, QPixmap
 
 class RecordingApp(QWidget):
@@ -23,18 +25,22 @@ class RecordingApp(QWidget):
         self.p = None
         self.wf = None
         
-        # Load environment variables
-        load_dotenv()
-        self.WHISPERCPP_URL = os.getenv("WHISPERCPP_URL")
-        self.LLAMACPP_URL = os.getenv("LLAMACPP_URL")
-        self.SYSTEM_MESSAGE = os.getenv("SYSTEM_MESSAGE")
-        self.SUMMARY_PROMPT = os.getenv("SUMMARY_PROMPT")
-        self.FACT_PROMPT = os.getenv("FACT_PROMPT")
-        self.SENTIMENT_PROMPT = os.getenv("SENTIMENT_PROMPT")
-        self.CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
-        self.TEMPERATURE = float(os.getenv("TEMPERATURE"))
-        self.TOP_P = float(os.getenv("TOP_P"))
-        self.MAX_TOKENS = float(os.getenv("MAX_TOKENS"))
+        # Configuration with defaults from sample.env
+        self.config = {
+            "WHISPERCPP_URL": "http://localhost:8081/inference",
+            "LLAMACPP_URL": "http://localhost:8080",
+            "SYSTEM_MESSAGE": "You are a helpful assistant.",
+            "SUMMARY_PROMPT": "Summarize the following meeting transcript:\n\n{chunk}",
+            "FACT_PROMPT": "Extract key facts from the following meeting transcript:\n\n{chunk}",
+            "SENTIMENT_PROMPT": "Analyze the sentiment of the following meeting transcript:\n\n{chunk}",
+            "CHUNK_SIZE": 2000,
+            "TEMPERATURE": 0.7,
+            "TOP_P": 0.9,
+            "MAX_TOKENS": 512
+        }
+        
+        # Try to load saved config
+        self.load_config()
         
         self.initUI()
 
@@ -60,6 +66,11 @@ class RecordingApp(QWidget):
 
         # Horizontal layout for the buttons
         button_layout = QHBoxLayout()
+
+        self.settings_button = QPushButton(self)
+        self.settings_button.setIcon(QIcon.fromTheme("preferences-system"))
+        self.settings_button.clicked.connect(self.show_settings)
+        button_layout.addWidget(self.settings_button)
 
         self.record_button = QPushButton('Record', self)
         self.record_button.clicked.connect(self.toggle_recording)
@@ -161,13 +172,17 @@ class RecordingApp(QWidget):
             "temperature": "0.0",
             "response_format": "json"
         }
-        response = requests.post(self.WHISPERCPP_URL, data=api_data, files=files)
+        response = requests.post(self.config["WHISPERCPP_URL"], data=api_data, files=files)
         return response.json()["text"]
 
     def llm_local(self, prompt):
-        client = OpenAI(api_key="doesntmatter", base_url=self.LLAMACPP_URL)
-        messages=[{"role": "system", "content": self.SYSTEM_MESSAGE},{"role": "user", "content": prompt}]
-        response = client.chat.completions.create(model="whatever", max_tokens=self.MAX_TOKENS, temperature=self.TEMPERATURE, top_p=self.TOP_P, messages=messages)
+        client = OpenAI(api_key="doesntmatter", base_url=self.config["LLAMACPP_URL"])
+        messages=[{"role": "system", "content": self.config["SYSTEM_MESSAGE"]},{"role": "user", "content": prompt}]
+        response = client.chat.completions.create(model="whatever", 
+                                               max_tokens=self.config["MAX_TOKENS"], 
+                                               temperature=self.config["TEMPERATURE"], 
+                                               top_p=self.config["TOP_P"], 
+                                               messages=messages)
         return response.choices[0].message.content
 
     def trim_silence(self, filename):
@@ -232,14 +247,14 @@ class RecordingApp(QWidget):
             print("Summarizing: " + transcript)
             with open(transcript, "r") as file:
                 transcript_data = file.read()
-                chunked_data = self.chunk_transcript(transcript_data, self.CHUNK_SIZE)
+                chunked_data = self.chunk_transcript(transcript_data, self.config["CHUNK_SIZE"])
 
                 with open(summary_filename, "a") as md_file:
                     for i, chunk in enumerate(chunked_data):
                         print("Processing part " + str(i))
-                        summary = self.llm_local(self.SUMMARY_PROMPT.format(chunk=chunk))
-                        facts = self.llm_local(self.FACT_PROMPT.format(chunk=chunk))
-                        sentiment = self.llm_local(self.SENTIMENT_PROMPT.format(chunk=chunk))
+                        summary = self.llm_local(self.config["SUMMARY_PROMPT"].format(chunk=chunk))
+                        facts = self.llm_local(self.config["FACT_PROMPT"].format(chunk=chunk))
+                        sentiment = self.llm_local(self.config["SENTIMENT_PROMPT"].format(chunk=chunk))
 
                         md_file.write(f"# Call Transcript - {transcript} - Part {i + 1}\n\nSummary: {summary}\n\nFacts:\n{facts}\n\nSentiment: {sentiment}\n\n---\n")
 
@@ -260,9 +275,99 @@ class RecordingApp(QWidget):
         except Exception as e:
             print(f"An error occurred while cleaning files: {e}")
 
+    def load_config(self):
+        """Load configuration from config.json if it exists."""
+        try:
+            if os.path.exists("config.json"):
+                with open("config.json", "r") as f:
+                    saved_config = json.load(f)
+                    self.config.update(saved_config)
+        except Exception as e:
+            print(f"Error loading config: {e}")
+
+    def save_config(self):
+        """Save configuration to config.json."""
+        try:
+            with open("config.json", "w") as f:
+                json.dump(self.config, f, indent=4)
+        except Exception as e:
+            print(f"Error saving config: {e}")
+
+    def show_settings(self):
+        """Show configuration dialog."""
+        dialog = ConfigDialog(self.config, self)
+        if dialog.exec_():
+            self.config.update(dialog.get_values())
+            self.save_config()
+
     def closeEvent(self, event):
         self.stop_recording()
         event.accept()
+
+class ConfigDialog(QDialog):
+    def __init__(self, config, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.setModal(True)
+        
+        layout = QFormLayout()
+        
+        self.whisper_url = QLineEdit(config["WHISPERCPP_URL"])
+        self.llama_url = QLineEdit(config["LLAMACPP_URL"])
+        self.system_msg = QLineEdit(config["SYSTEM_MESSAGE"])
+        self.summary_prompt = QLineEdit(config["SUMMARY_PROMPT"])
+        self.fact_prompt = QLineEdit(config["FACT_PROMPT"])
+        self.sentiment_prompt = QLineEdit(config["SENTIMENT_PROMPT"])
+        self.chunk_size = QSpinBox()
+        self.chunk_size.setRange(500, 5000)
+        self.chunk_size.setValue(config["CHUNK_SIZE"])
+        self.temperature = QDoubleSpinBox()
+        self.temperature.setRange(0.0, 2.0)
+        self.temperature.setSingleStep(0.1)
+        self.temperature.setValue(config["TEMPERATURE"])
+        self.top_p = QDoubleSpinBox()
+        self.top_p.setRange(0.0, 1.0)
+        self.top_p.setSingleStep(0.1)
+        self.top_p.setValue(config["TOP_P"])
+        self.max_tokens = QSpinBox()
+        self.max_tokens.setRange(128, 4096)
+        self.max_tokens.setValue(config["MAX_TOKENS"])
+        
+        layout.addRow("Whisper URL:", self.whisper_url)
+        layout.addRow("LLaMA URL:", self.llama_url)
+        layout.addRow("System Message:", self.system_msg)
+        layout.addRow("Summary Prompt:", self.summary_prompt)
+        layout.addRow("Fact Prompt:", self.fact_prompt)
+        layout.addRow("Sentiment Prompt:", self.sentiment_prompt)
+        layout.addRow("Chunk Size:", self.chunk_size)
+        layout.addRow("Temperature:", self.temperature)
+        layout.addRow("Top P:", self.top_p)
+        layout.addRow("Max Tokens:", self.max_tokens)
+        
+        buttons = QHBoxLayout()
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        buttons.addWidget(ok_button)
+        buttons.addWidget(cancel_button)
+        
+        layout.addRow(buttons)
+        self.setLayout(layout)
+    
+    def get_values(self):
+        return {
+            "WHISPERCPP_URL": self.whisper_url.text(),
+            "LLAMACPP_URL": self.llama_url.text(),
+            "SYSTEM_MESSAGE": self.system_msg.text(),
+            "SUMMARY_PROMPT": self.summary_prompt.text(),
+            "FACT_PROMPT": self.fact_prompt.text(),
+            "SENTIMENT_PROMPT": self.sentiment_prompt.text(),
+            "CHUNK_SIZE": self.chunk_size.value(),
+            "TEMPERATURE": self.temperature.value(),
+            "TOP_P": self.top_p.value(),
+            "MAX_TOKENS": self.max_tokens.value()
+        }
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
