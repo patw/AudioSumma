@@ -248,8 +248,9 @@ class RecordingApp(QWidget):
         transcript_files = [f for f in os.listdir(self.config["OUTPUT_DIR"]) if f.endswith(".tns")]
 
         for transcript in transcript_files:
-            print("Summarizing: " + transcript)
-            with open(transcript, "r") as file:
+            full_path = os.path.join(self.config["OUTPUT_DIR"], transcript)
+            print("Summarizing: " + full_path)
+            with open(full_path, "r") as file:
                 transcript_data = file.read()
                 chunked_data = self.chunk_transcript(transcript_data, self.config["CHUNK_SIZE"])
 
