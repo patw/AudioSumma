@@ -29,10 +29,10 @@ class RecordingApp(QWidget):
         self.config = {
             "WHISPERCPP_URL": "http://localhost:8081/inference",
             "LLAMACPP_URL": "http://localhost:8080",
-            "SYSTEM_MESSAGE": "You are a helpful assistant.",
-            "SUMMARY_PROMPT": "Summarize the following meeting transcript:\n\n{chunk}",
-            "FACT_PROMPT": "Extract key facts from the following meeting transcript:\n\n{chunk}",
-            "SENTIMENT_PROMPT": "Analyze the sentiment of the following meeting transcript:\n\n{chunk}",
+            "SYSTEM_MESSAGE": "You are a friendly chatbot that summarizes call transcripts",
+            "SUMMARY_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize the above call transcript but DO NOT MENTION THE TRANSCRIPT",
+            "FACT_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize all the facts in the transcript, one per line bullet point",
+            "SENTIMENT_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize the sentiment for topics in the above call transcript but DO NOT MENTION THE TRANSCRIPT",
             "CHUNK_SIZE": 12288,
             "TEMPERATURE": 0.6,
             "TOP_P": 0.9,
@@ -67,7 +67,7 @@ class RecordingApp(QWidget):
         # Horizontal layout for the buttons
         button_layout = QHBoxLayout()
 
-        self.settings_button = QPushButton('Config', self)
+        self.settings_button = QPushButton('Settings', self)
         self.settings_button.clicked.connect(self.show_settings)
         button_layout.addWidget(self.settings_button)
 
