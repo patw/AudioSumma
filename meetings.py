@@ -29,7 +29,7 @@ class RecordingApp(QWidget):
         # Configuration with defaults from sample.env
         self.config = {
             "WHISPERCPP_URL": "http://localhost:8081/inference",
-            "LLAMACPP_URL": "http://localhost:8080",
+            "LLAMACPP_URL": "http://localhost:8080/v1",
             "SYSTEM_MESSAGE": "You are a friendly chatbot that summarizes call transcripts",
             "SUMMARY_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize the above call transcript but DO NOT MENTION THE TRANSCRIPT",
             "FACT_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize all the facts in the transcript, one per line bullet point",
