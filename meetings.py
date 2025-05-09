@@ -215,11 +215,12 @@ class RecordingApp(QWidget):
                 print(f"Transcript already exists for {wav_file}, skipping transcription")
                 continue
 
-            print("Trimming silence: " + wav_file)
-            self.trim_silence(wav_file)
+            full_wav_path = os.path.join(self.config["OUTPUT_DIR"], wav_file)
+            print("Trimming silence: " + full_wav_path)
+            self.trim_silence(full_wav_path)
 
-            with open(wav_file, "rb") as file:
-                print("Transcribing: " + wav_file)
+            with open(full_wav_path, "rb") as file:
+                print("Transcribing: " + full_wav_path)
                 output_text = self.whisper_api(file)
                 output_file = os.path.join(self.config["OUTPUT_DIR"], os.path.splitext(wav_file)[0] + ".tns")
                 with open(output_file, "w") as output:
