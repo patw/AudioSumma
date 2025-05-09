@@ -11,7 +11,8 @@ import json
 from openai import OpenAI
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QVBoxLayout, 
                            QHBoxLayout, QInputDialog, QLabel, QComboBox,
-                           QDialog, QFormLayout, QLineEdit, QDoubleSpinBox, QSpinBox)
+                           QDialog, QFormLayout, QLineEdit, QDoubleSpinBox, 
+                           QSpinBox, QTextEdit)
 from PyQt5.QtGui import QIcon, QPixmap
 
 class RecordingApp(QWidget):
@@ -313,17 +314,19 @@ class ConfigDialog(QDialog):
         layout = QFormLayout()
         layout.setSpacing(15)  # Add more spacing between rows
         
-        self.whisper_url = QLineEdit(config["WHISPERCPP_URL"])
-        self.llama_url = QLineEdit(config["LLAMACPP_URL"])
-        self.system_msg = QLineEdit(config["SYSTEM_MESSAGE"])
-        self.summary_prompt = QLineEdit(config["SUMMARY_PROMPT"])
-        self.fact_prompt = QLineEdit(config["FACT_PROMPT"])
-        self.sentiment_prompt = QLineEdit(config["SENTIMENT_PROMPT"])
+        # Use QTextEdit for multi-line text fields
+        self.whisper_url = QTextEdit(config["WHISPERCPP_URL"])
+        self.llama_url = QTextEdit(config["LLAMACPP_URL"])
+        self.system_msg = QTextEdit(config["SYSTEM_MESSAGE"])
+        self.summary_prompt = QTextEdit(config["SUMMARY_PROMPT"])
+        self.fact_prompt = QTextEdit(config["FACT_PROMPT"])
+        self.sentiment_prompt = QTextEdit(config["SENTIMENT_PROMPT"])
         
-        # Make all line edit fields taller
-        for line_edit in [self.whisper_url, self.llama_url, self.system_msg, 
+        # Set minimum sizes for text areas
+        for text_edit in [self.whisper_url, self.llama_url, self.system_msg,
                          self.summary_prompt, self.fact_prompt, self.sentiment_prompt]:
-            line_edit.setMinimumHeight(30)
+            text_edit.setMinimumSize(500, 80)  # Width, Height
+            text_edit.setLineWrapMode(QTextEdit.WidgetWidth)
         self.chunk_size = QSpinBox()
         self.chunk_size.setRange(1000, 32000)
         self.chunk_size.setValue(config["CHUNK_SIZE"])
@@ -363,12 +366,12 @@ class ConfigDialog(QDialog):
     
     def get_values(self):
         return {
-            "WHISPERCPP_URL": self.whisper_url.text(),
-            "LLAMACPP_URL": self.llama_url.text(),
-            "SYSTEM_MESSAGE": self.system_msg.text(),
-            "SUMMARY_PROMPT": self.summary_prompt.text(),
-            "FACT_PROMPT": self.fact_prompt.text(),
-            "SENTIMENT_PROMPT": self.sentiment_prompt.text(),
+            "WHISPERCPP_URL": self.whisper_url.toPlainText(),
+            "LLAMACPP_URL": self.llama_url.toPlainText(),
+            "SYSTEM_MESSAGE": self.system_msg.toPlainText(),
+            "SUMMARY_PROMPT": self.summary_prompt.toPlainText(),
+            "FACT_PROMPT": self.fact_prompt.toPlainText(),
+            "SENTIMENT_PROMPT": self.sentiment_prompt.toPlainText(),
             "CHUNK_SIZE": self.chunk_size.value(),
             "TEMPERATURE": self.temperature.value(),
             "TOP_P": self.top_p.value(),
