@@ -28,7 +28,7 @@ class RecordingApp(QWidget):
         
         # Configuration with defaults
         self.config = {
-            "OUTPUT_DIR": os.path.join(os.path.expanduser("~"), "Documents", "MeetingTranscripts"),
+            "OUTPUT_DIR": os.path.join(os.path.expanduser("~"), "Documents"),
             "WHISPERCPP_URL": "http://localhost:8081/inference",
             "LLAMACPP_URL": "http://localhost:8080/v1",
             "SYSTEM_MESSAGE": "You are a friendly chatbot that summarizes call transcripts",
@@ -314,7 +314,7 @@ class ConfigDialog(QDialog):
         self.setModal(True)
         
         layout = QFormLayout()
-        layout.setSpacing(15)  # Add more spacing between rows
+        layout.setSpacing(5)  # Add more spacing between rows
         
         # Use QTextEdit for multi-line text fields
         self.whisper_url = QTextEdit(config["WHISPERCPP_URL"])
