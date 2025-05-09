@@ -274,8 +274,9 @@ class RecordingApp(QWidget):
         try:
             for file in os.listdir(self.config["OUTPUT_DIR"]):
                 if file.endswith(('.wav', '.tns')):
-                    os.remove(file)
-                    print(f"Deleted: {file}")
+                    full_path = os.path.join(self.config["OUTPUT_DIR"], file)
+                    os.remove(full_path)
+                    print(f"Deleted: {full_path}")
             print("Cleaning complete.")
         except Exception as e:
             print(f"An error occurred while cleaning files: {e}")
