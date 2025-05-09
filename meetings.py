@@ -33,10 +33,10 @@ class RecordingApp(QWidget):
             "SUMMARY_PROMPT": "Summarize the following meeting transcript:\n\n{chunk}",
             "FACT_PROMPT": "Extract key facts from the following meeting transcript:\n\n{chunk}",
             "SENTIMENT_PROMPT": "Analyze the sentiment of the following meeting transcript:\n\n{chunk}",
-            "CHUNK_SIZE": 2000,
-            "TEMPERATURE": 0.7,
+            "CHUNK_SIZE": 12288,
+            "TEMPERATURE": 0.6,
             "TOP_P": 0.9,
-            "MAX_TOKENS": 512
+            "MAX_TOKENS": 2000
         }
         
         # Try to load saved config
@@ -67,8 +67,7 @@ class RecordingApp(QWidget):
         # Horizontal layout for the buttons
         button_layout = QHBoxLayout()
 
-        self.settings_button = QPushButton(self)
-        self.settings_button.setIcon(QIcon.fromTheme("preferences-system"))
+        self.settings_button = QPushButton('Config', self)
         self.settings_button.clicked.connect(self.show_settings)
         button_layout.addWidget(self.settings_button)
 
