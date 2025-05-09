@@ -20,13 +20,7 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Copy sample.env to .env and point your endpoint URLs for a working llama.cpp and whisper.cpp running in server/api mode.
-
-## llama.cpp/ollama and whisper.cpp
-
-These need to be running in server mode somewhere on your local machine or on your network.  Add the endpoints to your .env
-
-The default values are correct if you run whisper.cpp and ollama server or llama.cpp server on your local machine.
+Use the Settings button in the app to configure the endpoints for your local Whisper.cpp and OLLAMA/llama.cpp servers.
 
 ## Running
 
