@@ -36,9 +36,7 @@ class RecordingApp(QWidget):
             "FACT_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize all the facts in the transcript, one per line bullet point",
             "SENTIMENT_PROMPT": "Call Transcript: {chunk}\n\nInstruction: Summarize the sentiment for topics in the above call transcript but DO NOT MENTION THE TRANSCRIPT",
             "CHUNK_SIZE": 12288,
-            "TEMPERATURE": 0.6,
-            "TOP_P": 0.9,
-            "MAX_TOKENS": 2000
+            "MAX_TOKENS": 1000
         }
         
         # Try to load saved config
@@ -182,8 +180,6 @@ class RecordingApp(QWidget):
         messages=[{"role": "system", "content": self.config["SYSTEM_MESSAGE"]},{"role": "user", "content": prompt}]
         response = client.chat.completions.create(model="whatever", 
                                                max_tokens=self.config["MAX_TOKENS"], 
-                                               temperature=self.config["TEMPERATURE"], 
-                                               top_p=self.config["TOP_P"], 
                                                messages=messages)
         return response.choices[0].message.content
 
@@ -336,14 +332,6 @@ class ConfigDialog(QDialog):
         self.chunk_size = QSpinBox()
         self.chunk_size.setRange(1000, 32000)
         self.chunk_size.setValue(config["CHUNK_SIZE"])
-        self.temperature = QDoubleSpinBox()
-        self.temperature.setRange(0.1, 1.0)
-        self.temperature.setSingleStep(0.1)
-        self.temperature.setValue(config["TEMPERATURE"])
-        self.top_p = QDoubleSpinBox()
-        self.top_p.setRange(0.1, 1.0)
-        self.top_p.setSingleStep(0.1)
-        self.top_p.setValue(config["TOP_P"])
         self.max_tokens = QSpinBox()
         self.max_tokens.setRange(512, 4096)
         self.max_tokens.setValue(config["MAX_TOKENS"])
@@ -355,8 +343,6 @@ class ConfigDialog(QDialog):
         layout.addRow("Fact Prompt:", self.fact_prompt)
         layout.addRow("Sentiment Prompt:", self.sentiment_prompt)
         layout.addRow("Chunk Size:", self.chunk_size)
-        layout.addRow("Temperature:", self.temperature)
-        layout.addRow("Top P:", self.top_p)
         self.output_dir = QTextEdit(config["OUTPUT_DIR"])
         self.output_dir.setMinimumSize(500, 80)
         self.output_dir.setLineWrapMode(QTextEdit.WidgetWidth)
@@ -384,8 +370,6 @@ class ConfigDialog(QDialog):
             "FACT_PROMPT": self.fact_prompt.toPlainText(),
             "SENTIMENT_PROMPT": self.sentiment_prompt.toPlainText(),
             "CHUNK_SIZE": self.chunk_size.value(),
-            "TEMPERATURE": self.temperature.value(),
-            "TOP_P": self.top_p.value(),
             "MAX_TOKENS": self.max_tokens.value(),
             "OUTPUT_DIR": self.output_dir.toPlainText()
         }
